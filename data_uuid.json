@@ -181,7 +181,8 @@
             "max_participants": 30,
             "created_by": "d5e6f7g8-9012-34hi-jklm-nopqrstuvwxy",
             "created_at": "2024-01-28T10:00:00Z",
-            "updated_at": "2024-01-28T10:00:00Z"
+            "updated_at": "2024-01-28T10:00:00Z",
+            "status": "pending"
         },
         {
             "id": "g9h8j7k6-5432-10fe-dcba-9876543210fe",
@@ -194,10 +195,9 @@
             "max_participants": 50,
             "created_by": "a1b2c3d4-5678-90ef-ghij-klmnopqrstuv",
             "created_at": "2024-02-04T15:00:00Z",
-            "updated_at": "2024-02-04T15:00:00Z"
+            "updated_at": "2024-02-04T15:00:00Z",
+            "status": "pending"
         }
     ],
-    "event_registration": [
-       
-    ]
+    "event_registration": []
 }

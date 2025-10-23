@@ -27,6 +27,5 @@ Route::delete('/user/{user}', [App\Http\Controllers\UserController::class, 'dest
 
 // Event Registration Controller Routes
 Route::apiResource('event-registration', EventRegistrationController::class);
-
-
-
+Route::post('/events/{event}/register/{userId}', [EventController::class, 'register']);
+Route::post('/events/{event}/approve/{userId}', [EventController::class, 'approveRegistration']);

@@ -15,9 +15,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('event_id')->constrained('event')->onDelete('cascade');
             $table->uuid('user_id')->constrained('user')->onDelete('cascade');
-            $table->dateTime('registered_at');
-            $table->string('status');
+            $table->dateTime('registered_at')->useCurrent();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
+
+            $table->index(['event_id', 'user_id']);
         });
     }
 

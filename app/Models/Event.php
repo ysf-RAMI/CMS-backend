@@ -27,6 +27,7 @@ class Event extends Model
         'image',
         'max_participants',
         'created_by',
+        'status'
     ];
 
     public function club()
@@ -36,7 +37,10 @@ class Event extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'event_registration', 'event_id', 'user_id')
-                    ->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_registration')
+            ->withPivot('status')
+            ->withTimestamps();
     }
+
+   
 }

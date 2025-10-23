@@ -12,7 +12,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        $events = Event::with(["club", "users"])->orderBy("created_at","desc")->get();    
+        $events = Event::with(["club", "users"])->orderBy("created_at", "desc")->get();
         return response()->json($events);
     }
 
@@ -22,7 +22,18 @@ class EventController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            "name"=> "",
+            "club_id" => "required|exists:club,id",
+            "title" => "required|string|max:255",
+            "description" => "required|string|max:255",
+            "date" => "required",
+            "location" => "required|string|max:255",
+            "image" => "required|file|image|mimes:jpeg,png,jpg,gif|max:2048",
+            "max_participants" => "required|integer|min:0",
+            "created_by" => "required|exists:user,id",
+        ]);
+
+        $event = Event::create($request->all());
+        return response()->json($event, 201);
     }
 
     /**
@@ -47,5 +58,21 @@ class EventController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function register(Request $request, Event $event, $userId)
+    {
+        if ($event->registrations()->where('user_id', $userId)->exists()) {
+            return response()->json(['message' => 'Already registered'], 400);
+        }
+
+        $event->registrations()->attach($userId, ['status' => 'pending']);
+        return response()->json(['message' => 'Registration pending approval']);
+    }
+
+    public function approveRegistration(Request $request, Event $event, $userId)
+    {
+        $event->registrations()->updateExistingPivot($userId, ['status' => 'approved']);
+        return response()->json(['message' => 'Registration approved']);
     }
 }

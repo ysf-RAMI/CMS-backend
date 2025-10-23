@@ -81,7 +81,7 @@ class UserController extends Controller
         // 2. Validate the incoming data
         $validatedData = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'sometimes|string|email|max:255|unique:user,email,' . $user->id,
             'department' => 'sometimes|string|max:255',
             'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
