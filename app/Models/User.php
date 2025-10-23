@@ -16,6 +16,10 @@ class User extends Authenticatable
     
     
     protected $table = "user";
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -25,12 +29,21 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
         'department',
         'image',
     ];
 
     
     protected $guarded = ['id'];
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
 
     /**
      * The attributes that should be hidden for serialization.

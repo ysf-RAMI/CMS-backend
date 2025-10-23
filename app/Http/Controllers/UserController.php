@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateUserRequest;
 use Log;
+use Nette\Utils\Strings;
 
 class UserController extends Controller
 {
@@ -33,7 +35,7 @@ class UserController extends Controller
         $email = $request['email'];
         if (User::where('email', $email)->first()) {
             return response()->json([
-                'message' => 'Email already exists',
+                'message' => 'User already exists',
             ], 422);
         }
         $user = User::create([
@@ -41,7 +43,7 @@ class UserController extends Controller
             'email' => $request['email'],
             'password' => Hash::make($request['password']),
             'role' => 'student',
-            'image' => $request['image'],
+            'image' => 'images/default.jpg',
             'department' => $request['department'],
         ]);
 
@@ -53,38 +55,31 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        Log::info('Attempting to show user: ' . $user->id);
         return response()->json($user->load(['clubs', 'events']), 200);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
-    {
-       
+   
 
-        if (isset($request['password'])) {
-            $request['password'] = Hash::make($request['password']);
-        }
 
-        $user->update($request->all()); 
-
-        return response()->json($user, 200);
-    }
 
     public function updatePassword(UpdatePasswordRequest $request)
     {
-        Log:info('updatePassword method reached!');
+        \Illuminate\Support\Facades\Log::info('updatePassword method reached!');
 
         $user = User::where('id', $request->id)->first();
 
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        $password = Hash::make($user['password']);
-        if (!Hash::check($request->currentPassword, $password)) {
+        
+        if (!Hash::check($request->currentPassword, $user->password)) {
             return response()->json(['message' => 'Current password does not match'], 400);
         }
+        
         $user->update([ 
             'password' => Hash::make($request->newPassword),
             'updated_at' => now(),
