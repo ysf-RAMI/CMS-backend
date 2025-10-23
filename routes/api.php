@@ -16,8 +16,10 @@ Route::apiResource('event', EventController::class);
 
 
 // User Controller Routes
-Route::put('/user/updatePassword', [UserController::class, 'updatePassword']);
-Route::apiResource('user', UserController::class);
+Route::put('/user/updatePassword', [App\Http\Controllers\UserController::class, 'updatePassword']);
+Route::get('/user', [App\Http\Controllers\UserController::class, 'index']);
+Route::get('/user/{user}', [App\Http\Controllers\UserController::class, 'show']);
+Route::put('/user/{user}', [App\Http\Controllers\UserController::class, 'update']);
 
 
 // Event Registration Controller Routes

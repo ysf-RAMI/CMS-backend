@@ -53,24 +53,54 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show($id)
     {
-        Log::info('Attempting to show user: ' . $user->id);
+        
+        $user = User::where('id', $id)->first();
+        
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        
         return response()->json($user->load(['clubs', 'events']), 200);
     }
 
     /**
      * Update the specified resource in storage.
      */
-   
+    public function update(Request $request, $id)
+    {
+        Log::info('Attempting to update user with ID: ' . $id);
+
+        $user = User::where('id', $id)->first();
+        
+        if (!$user) {
+            Log::info('User not found with ID: ' . $id);
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $validatedData = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'department' => 'sometimes|string|max:255',
+        ]);
+
+        Log::info('Validated data: ' . json_encode($validatedData));
+
+        $user->update($validatedData);
+
+        Log::info('User updated successfully: ' . $user->id);
+
+        return response()->json(['message' => 'User updated successfully', 'user' => $user->load(['clubs', 'events'])], 200);
+    }
 
 
 
-    public function updatePassword(UpdatePasswordRequest $request)
+    public function updatePassword(UpdatePasswordRequest $request , $id)
     {
         \Illuminate\Support\Facades\Log::info('updatePassword method reached!');
 
-        $user = User::where('id', $request->id)->first();
+        $user = User::where('id', $id)->first();
 
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
