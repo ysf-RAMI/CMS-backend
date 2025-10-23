@@ -4,12 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class EventRegistration extends Model
 {
     use HasFactory;
 
     protected $table = 'event_registration';
+
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
+    protected $casts = [
+        'id' => 'string',
+        'registered_at' => 'datetime',
+    ];
 
     protected $fillable = [
         'event_id',
@@ -18,13 +28,22 @@ class EventRegistration extends Model
         'status',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->{$model->getKeyName()} = (string) Str::uuid();
+        });
+    }
+
     public function event()
     {
-        return $this->belongsTo(Event::class);
+        return $this->belongsTo(Event::class, 'event_id');
     }
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

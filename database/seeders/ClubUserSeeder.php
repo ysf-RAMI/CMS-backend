@@ -20,7 +20,7 @@ class ClubUserSeeder extends Seeder
     public function run(): void
     {
         DB::table('club_user')->truncate();
-        $json = File::get(base_path('data.json'));
+        $json = File::get(base_path('data_uuid.json'));
         $data = json_decode($json, true);
 
         // Seed Club_User pivot table
@@ -30,6 +30,7 @@ class ClubUserSeeder extends Seeder
 
             if ($user && $club) {
                 $user->clubs()->attach($club->id, [
+                    'id' => $clubUserData['id'],
                     'role' => $clubUserData['role'] ?? 'student',
                     'status' => $clubUserData['status'] ?? 'pending',
                     'joined_at' => now(),

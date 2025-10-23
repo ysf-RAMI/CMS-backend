@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('club_user', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('club_id')->constrained()->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('user_id')->constrained('user')->onDelete('cascade');
+            $table->uuid('club_id')->constrained('club')->onDelete('cascade');
             $table->enum('role', ['admin-member', 'member', 'student'])->default('student');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamp('joined_at')->nullable();

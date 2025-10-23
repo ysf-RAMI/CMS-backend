@@ -2,19 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Http\Controllers\Controller;
+use Log;
 
 class UserController extends Controller
 {
+
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return User::all();
+        $users = User::with(['clubs', 'events'])->get();
+        return $users;
     }
 
     /**
@@ -22,26 +29,23 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8',
-            ]);
-        } catch (ValidationException $e) {
+
+        $email = $request['email'];
+        if (User::where('email', $email)->first()) {
             return response()->json([
-                'message' => 'Validation Error',
-                'errors' => $e->errors(),
+                'message' => 'Email already exists',
             ], 422);
         }
-
         $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
+            'name' => $request['name'],
+            'email' => $request['email'],
+            'password' => Hash::make($request['password']),
+            'role' => 'student',
+            'image' => $request['image'],
+            'department' => $request['department'],
         ]);
 
-        return response()->json($user, 201);
+        return response()->json(['user' => $user, 'message' => 'User created successfully'], 201);
     }
 
     /**
@@ -49,7 +53,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return $user;
+        return response()->json($user->load(['clubs', 'events']), 200);
     }
 
     /**
@@ -57,35 +61,35 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        try {
-            $validatedData = $request->validate([
-                'name' => 'sometimes|required|string|max:255',
-                'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
-                'password' => 'sometimes|required|string|min:8',
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation Error',
-                'errors' => $e->errors(),
-            ], 422);
+       
+
+        if (isset($request['password'])) {
+            $request['password'] = Hash::make($request['password']);
         }
 
-        if (isset($validatedData['password'])) {
-            $validatedData['password'] = Hash::make($validatedData['password']);
-        }
-
-        $user->update($validatedData);
+        $user->update($request->all()); 
 
         return response()->json($user, 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
+    public function updatePassword(UpdatePasswordRequest $request)
     {
-        $user->delete();
+        Log:info('updatePassword method reached!');
 
-        return response()->json(null, 204);
+        $user = User::where('id', $request->id)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        $password = Hash::make($user['password']);
+        if (!Hash::check($request->currentPassword, $password)) {
+            return response()->json(['message' => 'Current password does not match'], 400);
+        }
+        $user->update([ 
+            'password' => Hash::make($request->newPassword),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Password updated successfully']);
     }
 }

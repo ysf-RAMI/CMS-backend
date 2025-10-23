@@ -18,12 +18,13 @@ class EventSeeder extends Seeder
     public function run(): void
     {
         Event::truncate();
-        $json = File::get(base_path('data.json'));
+        $json = File::get(base_path('data_uuid.json'));
         $data = json_decode($json, true);
 
         // Seed Events
         foreach ($data['event'] as $eventData) {
             Event::create([
+                'id' => $eventData['id'],
                 'club_id' => $eventData['clubId'],
                 'title' => $eventData['title'],
                 'description' => $eventData['description'],

@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('club', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->string('categorie')->nullable();
             $table->integer('max_members')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->uuid('created_by')->nullable()->constrained('user')->onDelete('set null');
             $table->timestamps();
         });
     }

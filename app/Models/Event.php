@@ -11,6 +11,13 @@ class Event extends Model
 
     protected $table = 'event';
 
+    protected $keyType = 'string';
+    public $incrementing = false;
+
+    protected $casts = [
+        'id' => 'string',
+    ];
+
     protected $fillable = [
         'club_id',
         'title',
@@ -24,12 +31,12 @@ class Event extends Model
 
     public function club()
     {
-        return $this->belongsTo(Club::class);
+        return $this->belongsTo(Club::class, 'club_id');
     }
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'event_user', 'event_id', 'user_id')
+        return $this->belongsToMany(User::class, 'event_registration', 'event_id', 'user_id')
                     ->withTimestamps();
     }
 }

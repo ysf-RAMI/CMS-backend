@@ -18,12 +18,13 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         User::truncate();
-        $json = File::get(base_path('data.json'));
+        $json = File::get(base_path('data_uuid.json'));
         $data = json_decode($json, true);
 
         // Seed Users
         foreach ($data['user'] as $userData) {
             User::create([
+                'id' => $userData['id'],
                 'name' => $userData['name'],
                 'email' => $userData['email'],
                 'password' => Hash::make($userData['password']),

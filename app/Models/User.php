@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
-    use HasFactory,
-        Notifiable;
+    use HasFactory, Notifiable , HasUuids;
+    
     
     protected $table = "user";
     /**
@@ -23,10 +25,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
         'department',
         'image',
     ];
+
+    
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -55,11 +59,11 @@ class User extends Authenticatable
      */
     public function clubs(): BelongsToMany
     {
-        return $this->belongsToMany(Club::class);
+        return $this->belongsToMany(Club::class, 'club_user', 'user_id', 'club_id');
     }
     public function events(): BelongsToMany
     {
-        return $this->belongsToMany(Event::class);
+        return $this->belongsToMany(Event::class, 'event_registration', 'user_id', 'event_id');
     }
 
 

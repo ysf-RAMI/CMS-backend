@@ -7,6 +7,8 @@
             "password": "admin123",
             "role": "admin",
             "created_at": "2024-01-15T10:00:00Z",
+            "image":"https://picsum.photos/200/300",    
+            "departement" : "Informatique" ,
             "updated_at": "2024-01-15T10:00:00Z"
         },
         {
@@ -16,7 +18,9 @@
             "password": "password123",
             "role": "admin-member",
             "created_at": "2024-01-16T09:30:00Z",
-            "updated_at": "2024-01-16T09:30:00Z"
+            "updated_at": "2024-01-16T09:30:00Z",
+            "image":"https://picsum.photos/200/300",
+            "departement" : "Informatique" 
         },
         {
             "id": 3,
@@ -25,7 +29,9 @@
             "password": "password123",
             "role": "admin-member",
             "created_at": "2024-01-16T10:15:00Z",
-            "updated_at": "2024-01-16T10:15:00Z"
+            "updated_at": "2024-01-16T10:15:00Z",
+            "image":"https://picsum.photos/id/237/200/300",
+            "departement" : "Informatique"
         },
         {
             "id": 4,
@@ -34,7 +40,9 @@
             "password": "student123",
             "role": "student",
             "created_at": "2024-01-17T14:20:00Z",
-            "updated_at": "2024-01-17T14:20:00Z"
+            "updated_at": "2024-01-17T14:20:00Z",
+            "image":"https://picsum.photos/id/238/200/300",
+            "departement" : "Génie Civil"
         },
         {
             "id": 5,
@@ -43,7 +51,9 @@
             "password": "student123",
             "role": "student",
             "created_at": "2024-01-18T11:45:00Z",
-            "updated_at": "2024-01-18T11:45:00Z"
+            "updated_at": "2024-01-18T11:45:00Z",
+            "image":"https://picsum.photos/id/239/200/300",
+            "departement" : "Mécanique"
         },
         {
             "id": 6,
@@ -52,7 +62,9 @@
             "password": "member123",
             "role": "member",
             "created_at": "2024-01-19T16:30:00Z",
-            "updated_at": "2024-01-19T16:30:00Z"
+            "updated_at": "2024-01-19T16:30:00Z",
+            "image":"https://picsum.photos/id/240/200/300",
+            "departement" : "Électrique"
         }
     ],
     "club": [
@@ -266,32 +278,6 @@
             "eventId": 4,
             "status": "registered",
             "registered_at": "2024-01-31T13:00:00Z"
-        }
-    ],
-    "announcement": [
-        {
-            "id": 1,
-            "title": "Nouveau Club de Photographie",
-            "content": "Nous sommes heureux d'annoncer la création du nouveau Club de Photographie. Les inscriptions sont ouvertes !",
-            "created_by": 1,
-            "created_at": "2024-01-25T09:00:00Z",
-            "updated_at": "2024-01-25T09:00:00Z"
-        },
-        {
-            "id": 2,
-            "title": "Maintenance du Système",
-            "content": "Le système sera en maintenance le dimanche 28 janvier de 2h à 6h du matin.",
-            "created_by": 1,
-            "created_at": "2024-01-26T14:30:00Z",
-            "updated_at": "2024-01-26T14:30:00Z"
-        },
-        {
-            "id": 3,
-            "title": "Concours de Programmation",
-            "content": "Le Club Informatique organise un concours de programmation le 15 février. Inscriptions jusqu'au 10 février.",
-            "created_by": 2,
-            "created_at": "2024-01-27T11:15:00Z",
-            "updated_at": "2024-01-27T11:15:00Z"
         }
     ]
 }

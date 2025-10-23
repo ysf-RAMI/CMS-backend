@@ -17,12 +17,13 @@ class ClubSeeder extends Seeder
     public function run(): void
     {
         Club::truncate();
-        $json = File::get(base_path('data.json'));
+        $json = File::get(base_path('data_uuid.json'));
         $data = json_decode($json, true);
 
         // Seed Clubs
         foreach ($data['club'] as $clubData) {
             Club::create([
+                'id' => $clubData['id'],
                 'name' => $clubData['name'],
                 'description' => $clubData['description'] ?? null,
                 'image' => $clubData['image'] ?? null,

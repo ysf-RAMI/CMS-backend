@@ -18,12 +18,13 @@ class EventRegistrationSeeder extends Seeder
     public function run(): void
     {
         EventRegistration::truncate();
-        $json = File::get(base_path('data.json'));
+        $json = File::get(base_path('data_uuid.json'));
         $data = json_decode($json, true);
 
         // Seed Event Registrations
         foreach ($data['event_registration'] as $eventRegistrationData) {
             EventRegistration::create([
+                'id' => $eventRegistrationData['id'],
                 'event_id' => $eventRegistrationData['eventId'],
                 'user_id' => $eventRegistrationData['userId'],
                 'registered_at' => Carbon::parse($eventRegistrationData['registered_at'] ?? now())->format('Y-m-d H:i:s'),
