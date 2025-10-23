@@ -20,6 +20,9 @@ Route::put('/user/updatePassword', [App\Http\Controllers\UserController::class, 
 Route::get('/user', [App\Http\Controllers\UserController::class, 'index']);
 Route::get('/user/{user}', [App\Http\Controllers\UserController::class, 'show']);
 Route::put('/user/{user}', [App\Http\Controllers\UserController::class, 'update']);
+Route::post('/user/{user}', [App\Http\Controllers\UserController::class, 'update']); // For form-data with file uploads
+Route::delete('/user/{user}', [App\Http\Controllers\UserController::class, 'destroy']); // For form-data with file uploads
+
 
 
 // Event Registration Controller Routes
