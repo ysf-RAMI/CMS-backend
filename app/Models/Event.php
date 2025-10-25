@@ -6,6 +6,86 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+/**
+ * @OA\Schema(
+ *     title="Event",
+ *     description="Event model",
+ *     @OA\Xml(name="Event"),
+ *     @OA\Property(
+ *         property="id",
+ *         type="string",
+ *         format="uuid",
+ *         description="Unique identifier for the event",
+ *         readOnly=true
+ *     ),
+ *     @OA\Property(
+ *         property="club_id",
+ *         type="string",
+ *         format="uuid",
+ *         description="ID of the club organizing the event"
+ *     ),
+ *     @OA\Property(
+ *         property="title",
+ *         type="string",
+ *         description="Title of the event"
+ *     ),
+ *     @OA\Property(
+ *         property="description",
+ *         type="string",
+ *         description="Description of the event"
+ *     ),
+ *     @OA\Property(
+ *         property="date",
+ *         type="string",
+ *         format="date",
+ *         description="Date of the event"
+ *     ),
+ *     @OA\Property(
+ *         property="location",
+ *         type="string",
+ *         description="Location of the event"
+ *     ),
+ *     @OA\Property(
+ *         property="image",
+ *         type="string",
+ *         description="Image URL of the event (optional)",
+ *         nullable=true
+ *     ),
+ *     @OA\Property(
+ *         property="max_participants",
+ *         type="integer",
+ *         description="Maximum number of participants for the event"
+ *     ),
+ *     @OA\Property(
+ *         property="created_by",
+ *         type="string",
+ *         format="uuid",
+ *         description="ID of the user who created the event",
+ *         readOnly=true
+ *     ),
+ *     @OA\Property(
+ *         property="status",
+ *         type="string",
+ *         enum={"pending", "approved", "rejected"},
+ *         description="Status of the event",
+ *         example="pending"
+ *     ),
+ *     @OA\Property(
+ *         property="created_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Timestamp when the event was created",
+ *         readOnly=true
+ *     ),
+ *     @OA\Property(
+ *         property="updated_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Timestamp when the event was last updated",
+ *         readOnly=true
+ *     )
+ * )
+ */
 class Event extends Model
 {
     use HasFactory;

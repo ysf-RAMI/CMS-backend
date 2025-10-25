@@ -3,13 +3,15 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventRegistrationController;
+use App\Models\ClubUser;
 use Illuminate\Support\Facades\Route;
 
 
 // Auth Controller Routes
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register-public', [App\Http\Controllers\UserController::class, 'store']); 
+    Route::post('/register-public', [App\Http\Controllers\UserController::class, 'store']);
     Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('jwt.refresh');
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -32,6 +34,7 @@ Route::middleware('auth:api')->group(function () {
 
     // AdminMember api 
     Route::middleware('role:admin-member')->group(function () {
+        Route::post('/club/student', [ClubController::class, 'approveStudent']);
         Route::post('/event', [EventController::class, 'store']);
         Route::put('/event/{event}', [EventController::class, 'update']);
         Route::delete('/event/{event}', [EventController::class, 'destroy']);
@@ -43,12 +46,12 @@ Route::middleware('auth:api')->group(function () {
 
     // Member api 
     Route::middleware('role:member')->group(function () {
-        Route::get('/event', [EventController::class, 'index']);
+        
     });
 
     // Student , Member , AdminMemeber api
     Route::middleware('role:student,member,admin-member')->group(function () {
-        Route::post('/events/{event}/register/{userId}', [EventController::class, 'register']);
+        Route::post('/event/register', [EventRegistrationController::class, 'store']);
     });
 
     // All Users Type api
@@ -62,6 +65,7 @@ Route::middleware('auth:api')->group(function () {
 // Public Club controller 
 Route::get('/club/{club}', [ClubController::class, 'show']);
 Route::get('/club', [ClubController::class, 'index']);
+Route::get('/club/join', [ClubController::class, 'joinclub']);
 
 
 // Public Event Controller
@@ -71,9 +75,7 @@ Route::get('/event', [EventController::class, 'index']);
 // Public User Controller Routes
 Route::get('/user', [App\Http\Controllers\UserController::class, 'index']);
 Route::get('/user/{user}', [App\Http\Controllers\UserController::class, 'show']);
-Route::delete('/user/{user}', [App\Http\Controllers\UserController::class, 'destroy']); // For form-data with file uploads
-
-
+Route::delete('/user/{user}', [App\Http\Controllers\UserController::class, 'destroy']);
 
 
 
@@ -82,3 +84,4 @@ Route::delete('/user/{user}', [App\Http\Controllers\UserController::class, 'dest
 Route::get('/login', function () {
     return response()->json(['message' => 'Authentication Required'], 401);
 })->name('login');
+

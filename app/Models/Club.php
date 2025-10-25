@@ -7,6 +7,62 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @OA\Schema(
+ *     title="Club",
+ *     description="Club model",
+ *     @OA\Xml(name="Club"),
+ *     @OA\Property(
+ *         property="id",
+ *         type="string",
+ *         format="uuid",
+ *         description="UUID of the club"
+ *     ),
+ *     @OA\Property(
+ *         property="name",
+ *         type="string",
+ *         description="Name of the club"
+ *     ),
+ *     @OA\Property(
+ *         property="description",
+ *         type="string",
+ *         description="Description of the club"
+ *     ),
+ *     @OA\Property(
+ *         property="image",
+ *         type="string",
+ *         description="Image URL of the club"
+ *     ),
+ *     @OA\Property(
+ *         property="categorie",
+ *         type="string",
+ *         description="Category of the club"
+ *     ),
+ *     @OA\Property(
+ *         property="max_members",
+ *         type="integer",
+ *         description="Maximum number of members in the club"
+ *     ),
+ *     @OA\Property(
+ *         property="created_by",
+ *         type="string",
+ *         format="uuid",
+ *         description="UUID of the user who created the club"
+ *     ),
+ *     @OA\Property(
+ *         property="created_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Creation timestamp"
+ *     ),
+ *     @OA\Property(
+ *         property="updated_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Last update timestamp"
+ *     )
+ * )
+ */
 class Club extends Model
 {
     use HasFactory;
@@ -37,7 +93,7 @@ class Club extends Model
     /**
      * The events that belong to the Club
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function events(): HasMany
     {

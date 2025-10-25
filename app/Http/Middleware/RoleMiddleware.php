@@ -33,9 +33,9 @@ class RoleMiddleware
         $userRoleCamelCase = Str::camel($userRole);
         $camelCaseRoles = array_map(fn($role) => Str::camel($role), $roles);
         Log::channel('single')->info('RoleMiddleware: Incoming primary role - '. $userRoleCamelCase .', Required roles - '. implode(',', $camelCaseRoles));
-
-        if (in_array($userRoleCamelCase, $camelCaseRoles)) {
-            Log::channel('single')->info('RoleMiddleware: User primary role matched', ['role' => $userRoleCamelCase]);
+        
+        if ($userRoleCamelCase !== 'member' && in_array($userRoleCamelCase, $camelCaseRoles)) {
+            Log::channel('single')->info('RoleMiddleware: User primary role matched (non-member)', ['role' => $userRoleCamelCase]);
             return $next($request);
         }
 
