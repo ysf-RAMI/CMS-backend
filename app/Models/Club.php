@@ -12,6 +12,9 @@ class Club extends Model
     use HasFactory;
 
     protected $table = "club";
+    protected $primaryKey = 'id'; 
+    public $incrementing = false; 
+    protected $keyType = 'string';
 
     protected $fillable = [
         'name',
@@ -30,7 +33,7 @@ class Club extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'club_user', 'club_id', 'user_id');
-    }   
+    }
     /**
      * The events that belong to the Club
      *
@@ -40,4 +43,5 @@ class Club extends Model
     {
         return $this->hasMany(Event::class, 'club_id');
     }
+
 }

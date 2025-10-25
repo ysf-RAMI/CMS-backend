@@ -23,7 +23,7 @@ class ClubController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|string',
+            'image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
             'categorie' => 'required|string|max:255',
             'max_members' => 'required|integer',
             'created_by' => 'required|integer|exists:user,id',
@@ -61,6 +61,11 @@ class ClubController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $club = Club::find($id);    
+        if (!$club) {
+            return response()->json(['message'=>'Club not found'], 404);
+        }
+        $club->delete();
+        return response()->json(['message'=>'Club deleted successfully'], 204);
     }
 }

@@ -9,4 +9,14 @@ use Illuminate\Routing\Controller as BaseController;
 class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
+
+    public function index()
+    {
+        return Event::with([
+            'club' => function ($query) {
+                $query->select('id', 'name');
+            },
+            'users'
+        ])->get();
+    }
 }
