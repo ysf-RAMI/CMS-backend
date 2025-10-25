@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Club;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ClubController extends Controller
 {
@@ -26,9 +27,22 @@ class ClubController extends Controller
             'image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
             'categorie' => 'required|string|max:255',
             'max_members' => 'required|integer',
-            'created_by' => 'required|integer|exists:user,id',
         ]);
+$club = new Club;
+        if ($request->hasFile('image')) {
+            // Delete old image if it exists
+            if ($club->image && file_exists(public_path($club->image))) {
+                unlink(public_path($club->image));
+            }
 
+            $image = $request->file('image');
+            $extension = $image->getClientOriginalExtension();
+            $imageName = \Illuminate\Support\Str::uuid() . '_' . time() . '.' . $extension;
+            $image->move(public_path('images'), $imageName);
+            $validatedData['image'] = 'images/' . $imageName;
+        }
+
+        $validatedData['created_by'] = auth()->id();
         $club = Club::create($validatedData);
 
         return response()->json($club, 201);
@@ -53,7 +67,34 @@ class ClubController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $club = Club::find($id);
+
+        if (!$club) {
+            return response()->json(['message' => 'Club not found'], 404);
+        }
+
+        $validatedData = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
+            'image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'categorie' => 'sometimes|string|max:255',
+            'max_members' => 'sometimes|integer',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $extension = $image->getClientOriginalExtension();
+            $imageName = \Illuminate\Support\Str::uuid() . '_' . time() . '.' . $extension;
+            $image->move(public_path('images'), $imageName);
+            $validatedData['image'] = 'images/' . $imageName;
+        }
+
+        $club->update($validatedData);
+
+        return response()->json([
+            'message' => 'Club updated successfully',
+            'club' => $club
+        ], 200);
     }
 
     /**

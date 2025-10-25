@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Event;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
 
 class EventSeeder extends Seeder
@@ -17,22 +16,23 @@ class EventSeeder extends Seeder
      */
     public function run(): void
     {
-        Event::truncate();
-        $json = File::get(base_path('data_uuid.json'));
+        $json = file_get_contents(base_path('data_uuid.json'));
         $data = json_decode($json, true);
 
-        // Seed Events
         foreach ($data['event'] as $eventData) {
             Event::create([
                 'id' => $eventData['id'],
                 'club_id' => $eventData['clubId'],
                 'title' => $eventData['title'],
                 'description' => $eventData['description'],
-                'date' => Carbon::parse($eventData['date'])->format('Y-m-d H:i:s'),
+                'date' => Carbon::parse($eventData['date']), // Parse date string to Carbon instance
                 'location' => $eventData['location'],
-                'image' => $eventData['image'],
-                'max_participants' => $eventData['max_participants'],
+                'image' => $eventData['image'] ?? null,
+                'max_participants' => $eventData['max_participants'] ?? null,
                 'created_by' => $eventData['created_by'],
+                'created_at' => Carbon::parse($eventData['created_at']),
+                'updated_at' => Carbon::parse($eventData['updated_at']),
+                'status' => $eventData['status'] ?? 'pending',
             ]);
         }
     }

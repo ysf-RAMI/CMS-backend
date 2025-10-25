@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Log as LogFacade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Config;
 
 class AuthController extends Controller
 {
@@ -14,11 +16,17 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        LogFacade::info('JWT_SECRET from config: ' . Config::get('jwt.secret'));
         $credentials = $request->only('email', 'password');
 
         if (!$token = JWTAuth::attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        $user = Auth::user();
+        $user = \App\Models\User::find($user->id);
+        $user->load('clubs');
+        LogFacade::info('AuthController: User logged in with clubs', ['user_id' => $user->id, 'user_email' => $user->email, 'clubs' => $user->clubs]);
 
         return $this->respondWithToken($token);
     }

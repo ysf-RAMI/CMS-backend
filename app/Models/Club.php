@@ -32,7 +32,7 @@ class Club extends Model
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'club_user', 'club_id', 'user_id');
+        return $this->belongsToMany(User::class, 'club_user', 'club_id', 'user_id')->withPivot('role');
     }
     /**
      * The events that belong to the Club
@@ -42,6 +42,15 @@ class Club extends Model
     public function events(): HasMany
     {
         return $this->hasMany(Event::class, 'club_id');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->{$model->getKeyName()} = (string) \Illuminate\Support\Str::uuid();
+        });
     }
 
 }

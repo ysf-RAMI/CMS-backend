@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\EventRegistration;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
 
 class EventRegistrationSeeder extends Seeder
@@ -17,18 +16,29 @@ class EventRegistrationSeeder extends Seeder
      */
     public function run(): void
     {
-        EventRegistration::truncate();
-        $json = File::get(base_path('data_uuid.json'));
-        $data = json_decode($json, true);
+        $data = [
+            'event_registration' => [
+                [
+                    'id' => 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+                    'eventId' => 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+                    'userId' => 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+                    'registered_at' => '2024-01-01 10:00:00',
+                ],
+                [
+                    'id' => 'b1fccb00-0d1c-4ff9-cc7e-7cc0ce491b22',
+                    'eventId' => 'b1fccb00-0d1c-4ff9-cc7e-7cc0ce491b22',
+                    'userId' => 'b1fccb00-0d1c-4ff9-cc7e-7cc0ce491b22',
+                    'registered_at' => '2024-01-02 11:00:00',
+                ],
+            ],
+        ];
 
-        // Seed Event Registrations
         foreach ($data['event_registration'] as $eventRegistrationData) {
             EventRegistration::create([
                 'id' => $eventRegistrationData['id'],
                 'event_id' => $eventRegistrationData['eventId'],
                 'user_id' => $eventRegistrationData['userId'],
-                'registered_at' => Carbon::parse($eventRegistrationData['registered_at'] ?? now())->format('Y-m-d H:i:s'),
-                'status' => $eventRegistrationData['status'] ?? 'registered',
+                'registered_at' => Carbon::parse($eventRegistrationData['registered_at']),
             ]);
         }
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -24,7 +25,11 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with(['clubs', 'events'])->get();
-        return $users;
+        return response(
+            $users,
+            200
+        );
+
     }
 
     /**
@@ -43,7 +48,7 @@ class UserController extends Controller
             'name' => $request['name'],
             'email' => $request['email'],
             'password' => Hash::make($request['password']),
-            'role' => 'student',
+            'role' => $request['role'] ?? 'student',
             'image' => 'images/default.jpg',
             'department' => $request['department'],
         ]);
@@ -63,7 +68,7 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        return response()->json($user->load(['clubs', 'events']), 200);
+        return new UserResource($user->load(['clubs', 'events']));
     }
 
     /**
@@ -84,6 +89,7 @@ class UserController extends Controller
             'email' => 'sometimes|string|email|max:255|unique:user,email,' . $user->id,
             'department' => 'sometimes|string|max:255',
             'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'role' => 'sometimes|string|in:admin,admin-member,member,student',
         ]);
 
         // 3. If there's an image file, upload it
@@ -104,7 +110,7 @@ class UserController extends Controller
         // 6. Return success response with updated user
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $user->load(['clubs', 'events'])
+            'user' => new UserResource($user->load(['clubs', 'events']))
         ], 200);
     }
 
@@ -142,7 +148,7 @@ class UserController extends Controller
         }
 
         $user->delete();
-        return response()->json(['message'=> 'User deleted'] , 202);
+        return response()->json(['message' => 'User deleted'], 202);
 
     }
 

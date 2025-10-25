@@ -29,10 +29,11 @@ class EventController extends Controller
             "description" => "required|string|max:255",
             'date' => 'required|date',
             "location" => "required|string|max:255",
-            "image" => "required|file|image|mimes:jpeg,png,jpg,gif|max:2048",
+            "image" => "nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048",
             "max_participants" => "required|integer|min:0",
-            "created_by" => "required|exists:user,id",
         ]);
+
+        $validatedData['created_by'] = auth()->id();
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -95,10 +96,10 @@ class EventController extends Controller
     {
         $event = Event::find($id);
         if (!$event) {
-            return response()->json(['message'=>'Event not found'], 404);
+            return response()->json(['message' => 'Event not found'], 404);
         }
         $event->delete();
-        return response()->json(['message'=>'Event deleted successfully'], 204);
+        return response()->json('message' => 'Event deleted successfully', 200);
     }
 
     public function register(Request $request, Event $event, $userId)
@@ -111,14 +112,18 @@ class EventController extends Controller
         return response()->json(['message' => 'Registration pending approval']);
     }
 
-    public function approveRegistration(Request $request, Event $event, $userId)
+    public function accepteEvent($id)
     {
-        $event->registrations()->updateExistingPivot($userId, ['status' => 'approved']);
-        return response()->json(['message' => 'Registration approved']);
+        $event = Event::find($id);
+
+        if (!$event) {
+            return response()->json(['message' => 'Event not found'], 404);
+        }
+
+        $event->status = 'approved';
+        $event->save();
+
+        return response()->json(['message' => 'Event approved successfully', 'event' => $event], 200);
     }
 
-    public function club()
-    {
-        return $this->belongsTo(Club::class);
-    }
 }
