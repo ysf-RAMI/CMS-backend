@@ -7,6 +7,7 @@ use App\Models\ClubUser;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class ClubController extends Controller
 {
@@ -63,26 +64,30 @@ class ClubController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
             'categorie' => 'required|string|max:255',
             'max_members' => 'required|integer',
         ]);
-        $club = new Club;
+
         if ($request->hasFile('image')) {
-            // Delete old image if it exists
-            if ($club->image && file_exists(public_path($club->image))) {
-                unlink(public_path($club->image));
-            }
+            $request->validate([
+                'image' => 'file|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
             $image = $request->file('image');
             $extension = $image->getClientOriginalExtension();
             $imageName = \Illuminate\Support\Str::uuid() . '_' . time() . '.' . $extension;
             $image->move(public_path('images'), $imageName);
             $validatedData['image'] = 'images/' . $imageName;
+        } else {
+            $validatedData['image'] = 'images/default_club_image.jpg'; // Set default image
         }
       
         $validatedData['created_by'] = auth()->id();
-        $club = Club::create($validatedData);
-        return response()->json($club, 201);
+        try {
+            $club = Club::create($validatedData);
+            return response()->json($club, 201);
+        } catch (UniqueConstraintViolationException $e) {
+            return response()->json(['message' => 'A club with this name already exists.'], 409);
+        }
     }
 
     /**
@@ -123,7 +128,7 @@ class ClubController extends Controller
     }
 
     /**
-     * @OA\Post(
+     * @OA\Put(
      *     path="/api/clubs/{id}",
      *     summary="Update a club",
      *     tags={"Clubs"},
@@ -180,12 +185,14 @@ class ClubController extends Controller
         $validatedData = $request->validate([
             'name' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
-            'image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
             'categorie' => 'sometimes|string|max:255',
             'max_members' => 'sometimes|integer',
         ]);
 
         if ($request->hasFile('image')) {
+            $request->validate([
+                'image' => 'file|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
             $image = $request->file('image');
             $extension = $image->getClientOriginalExtension();
             $imageName = \Illuminate\Support\Str::uuid() . '_' . time() . '.' . $extension;
@@ -289,15 +296,17 @@ class ClubController extends Controller
         $user_id = $request['user_id'];
         $club_id = $request['club_id'];
 
-        $student = User::find($user_id);
+        $user = User::find($user_id);
 
-        if (!$student) {
-            return response()->json(['message' => 'Student not found'], 404);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
 
-        // Update student's role to 'member'
-        $student->role = 'member';
-        $student->save();
+        // Update user's role to 'member' if they are a student
+        if ($user->role === 'student') {
+            $user->role = 'member';
+            $user->save();
+        }
 
         // Find or create ClubUser entry
         $clubUser = ClubUser::firstOrNew(
@@ -355,15 +364,17 @@ class ClubController extends Controller
         $user_id = $request['user_id'];
         $club_id = $request['club_id'];
 
-        $student = User::find($user_id);
+        $user = User::find($user_id);
 
-        if (!$student) {
-            return response()->json(['message' => 'Student not found'], 404);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
 
-        // Update student's role to 'member'
-        $student->role = 'member';
-        $student->save();
+        // Update user's role to 'member' if they are a student
+        if ($user->role === 'student') {
+            $user->role = 'member';
+            $user->save();
+        }
 
         // Find or create ClubUser entry
         $clubUser = ClubUser::firstOrNew(

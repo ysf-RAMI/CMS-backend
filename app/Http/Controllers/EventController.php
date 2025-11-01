@@ -22,7 +22,7 @@ class EventController extends Controller
      * )
      */
     public function index()
-    {
+    {               Event::all();
         $events = Event::with(["users"])->orderBy("created_at", "desc")->get();
         return response()->json($events);
     }
@@ -82,6 +82,8 @@ class EventController extends Controller
             $imageName = Str::uuid() . '_' . time() . '.' . $extension;
             $image->move(public_path('images'), $imageName);
             $validatedData['image'] = 'images/' . $imageName;
+        } else {
+            $validatedData['image'] = 'images/default_event_image.jpg'; // Set default image
         }
         $event = Event::create($validatedData);
         return response()->json($event, 201);
@@ -120,7 +122,7 @@ class EventController extends Controller
     }
 
     /**
-     * @OA\Post(
+     * @OA\Put(
      *     path="/api/events/{id}",
      *     summary="Update an event",
      *     tags={"Events"},
@@ -191,6 +193,12 @@ class EventController extends Controller
             $imageName = Str::uuid() . '_' . time() . '.' . $extension;
             $image->move(public_path('images'), $imageName);
             $validatedData['image'] = 'images/' . $imageName;
+        } elseif (isset($validatedData['image']) && ($validatedData['image'] === null || $validatedData['image'] === '')) {
+            // If image is explicitly set to null or empty, use default image
+            $validatedData['image'] = 'images/default_event_image.jpg';
+        } else {
+            // If no new image is provided, retain the existing image
+            unset($validatedData['image']);
         }
 
         $event->update($validatedData);
@@ -248,8 +256,8 @@ class EventController extends Controller
     
 
     /**
-     * @OA\Post(
-     *     path="/api/events/{id}/accept",
+     * @OA\Put(
+     *     path="/api/event/status/{id}",
      *     summary="Accept an event",
      *     tags={"Events"},
      *     security={{"bearerAuth":{}}},

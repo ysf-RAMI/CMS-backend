@@ -44,8 +44,8 @@ class UserController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/users",
-     *     summary="Create a new user",
+     *     path="/api/auth/register-public",
+     *     summary="Register a new public user",
      *     tags={"Users"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
@@ -80,26 +80,7 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function store(Request $request)
-    {
-
-        $email = $request['email'];
-        if (User::where('email', $email)->first()) {
-            return response()->json([
-                'message' => 'User already exists',
-            ], 422);
-        }
-        $user = User::create([
-            'name' => $request['name'],
-            'email' => $request['email'],
-            'password' => Hash::make($request['password']),
-            'role' => $request['role'] ?? 'student',
-            'image' => 'images/default.jpg',
-            'department' => $request['department'],
-        ]);
-
-        return response()->json(['user' => $user, 'message' => 'User created successfully'], 201);
-    }
+    
 
     /**
      * @OA\Get(
@@ -148,7 +129,7 @@ class UserController extends Controller
     }
 
     /**
-     * @OA\Post(
+     * @OA\Put(
      *     path="/api/users/{id}",
      *     summary="Update a user",
      *     tags={"Users"},
@@ -216,6 +197,12 @@ class UserController extends Controller
             $imageName = Str::uuid() . '_' . time() . '.' . $extension;
             $image->move(public_path('images'), $imageName);
             $validatedData['image'] = 'images/' . $imageName;
+        } elseif (isset($validatedData['image']) && ($validatedData['image'] === null || $validatedData['image'] === '')) {
+            // If image is explicitly set to null or empty, use default image
+            $validatedData['image'] = 'images/default_user_image.jpg';
+        } else {
+            // If no new image is provided, retain the existing image
+            unset($validatedData['image']);
         }
 
         // 4. Update the user with the new data

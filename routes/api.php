@@ -4,18 +4,16 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClubController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
-use App\Models\ClubUser;
 use Illuminate\Support\Facades\Route;
 
 
 // Auth Controller Routes
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register-public', [App\Http\Controllers\UserController::class, 'store']);
+    Route::post('/register', [AuthController::class, 'store']);
     Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('jwt.refresh');
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/register', [AuthController::class, 'register']);
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 });
@@ -26,27 +24,27 @@ Route::middleware('auth:api')->group(function () {
 
     // Admin api
     Route::middleware('role:admin')->group(function () {
-        Route::post('/club', [ClubController::class, 'store']);
-        Route::put('/club/{id}', [ClubController::class, 'update']);
-        Route::delete('/club/{club}', [ClubController::class, 'destroy']);
+        Route::post('/clubs', [ClubController::class, 'store']);
+        Route::put('/clubs/{id}', [ClubController::class, 'update']);
+        Route::delete('/clubs/{club}', [ClubController::class, 'destroy']);
         Route::put('/event/status/{id}', [EventController::class, 'accepteEvent']);
     });
 
     // AdminMember api 
     Route::middleware('role:admin-member')->group(function () {
-        Route::post('/club/student', [ClubController::class, 'approveStudent']);
+        Route::post('/clubs/approve-student', [ClubController::class, 'approveStudent']);
         Route::post('/event', [EventController::class, 'store']);
         Route::put('/event/{event}', [EventController::class, 'update']);
         Route::delete('/event/{event}', [EventController::class, 'destroy']);
         Route::post('/events/{event}/approve/{userId}', [EventController::class, 'approveRegistration']);
-        Route::get('/club/event', function () {
+        Route::get('/clubs/event', function () {
             return response()->json(['message' => 'Club Event Access Granted'], 200);
         });
     });
 
     // Member api 
     Route::middleware('role:member')->group(function () {
-        
+
     });
 
     // Student , Member , AdminMemeber api
@@ -56,26 +54,28 @@ Route::middleware('auth:api')->group(function () {
 
     // All Users Type api
     Route::middleware('role:student,member,admin-member,admin')->group(function () {
-        Route::put('/user/{user}', [App\Http\Controllers\UserController::class, 'update']);
-        Route::put('/user/{id}/updatePassword', [App\Http\Controllers\UserController::class, 'updatePassword']);
+        Route::put('/users/{user}', [App\Http\Controllers\UserController::class, 'update']);
+        Route::put('/users/{id}/updatePassword', [App\Http\Controllers\UserController::class, 'updatePassword']);
     });
 
 });
 
-// Public Club controller 
-Route::get('/club/{club}', [ClubController::class, 'show']);
-Route::get('/club', [ClubController::class, 'index']);
-Route::get('/club/join', [ClubController::class, 'joinclub']);
+Route::group(['middleware' => ['api']], function () {
+    // Public Club controller 
+    Route::get('/clubs/{club}', [ClubController::class, 'show']);
+    Route::get('/clubs', [ClubController::class, 'index']);
+    Route::post('/clubs/join', [ClubController::class, 'joinclub']);
 
 
-// Public Event Controller
-Route::get('/event/{event}', [EventController::class, 'show']);
-Route::get('/event', [EventController::class, 'index']);
+    // Public Event Controller
+    Route::get('/events/{event}', [EventController::class, 'show']);
+    Route::get('/events', [EventController::class, 'index']);
 
-// Public User Controller Routes
-Route::get('/user', [App\Http\Controllers\UserController::class, 'index']);
-Route::get('/user/{user}', [App\Http\Controllers\UserController::class, 'show']);
-Route::delete('/user/{user}', [App\Http\Controllers\UserController::class, 'destroy']);
+    // Public User Controller Routes
+    Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
+    Route::get('/users/{user}', [App\Http\Controllers\UserController::class, 'show']);
+    Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy']);
+});
 
 
 

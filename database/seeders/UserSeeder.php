@@ -12,14 +12,9 @@ class UserSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         User::truncate();
-        // $json = File::get(base_path('data_uuid.json'));
-        // $data = json_decode($json, true);
 
         $users = [
             [

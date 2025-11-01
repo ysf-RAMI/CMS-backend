@@ -5,6 +5,183 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Authenticate user and return JWT token",
+                "operationId": "8dcb70df1020986038d098cc08d05dae",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful login",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "example": 3600
+                                        },
+                                        "role": {
+                                            "type": "string",
+                                            "example": "student"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh JWT token",
+                "operationId": "b2eae7a8032954d25b46c7ec6f489c68",
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "example": 3600
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Token has been blacklisted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Log out user (invalidate token)",
+                "operationId": "69281b12abb272c76871f19cb17ca563",
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged out",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Successfully logged out"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/clubs": {
             "get": {
                 "tags": [
@@ -156,12 +333,12 @@
                     }
                 }
             },
-            "post": {
+            "put": {
                 "tags": [
                     "Clubs"
                 ],
                 "summary": "Update a club",
-                "operationId": "c502b0a1f7d487699e52f872a3f08c99",
+                "operationId": "9a7201b06d26cfc6aa54fe93f98774d2",
                 "parameters": [
                     {
                         "name": "id",
@@ -684,12 +861,12 @@
                     }
                 }
             },
-            "post": {
+            "put": {
                 "tags": [
                     "Events"
                 ],
                 "summary": "Update an event",
-                "operationId": "234954462a016feba64c8d30de2bb249",
+                "operationId": "fb130dcf1ab4d7abbd3a173741df1f8f",
                 "parameters": [
                     {
                         "name": "id",
@@ -879,13 +1056,13 @@
                 ]
             }
         },
-        "/api/events/{id}/accept": {
-            "post": {
+        "/api/event/status/{id}": {
+            "put": {
                 "tags": [
                     "Events"
                 ],
                 "summary": "Accept an event",
-                "operationId": "179ddaba91afc78b3ba4bc09f37ef180",
+                "operationId": "4b706a63ba3e9d02a0c1e10ade076a8a",
                 "parameters": [
                     {
                         "name": "id",
@@ -1339,13 +1516,15 @@
                         "bearerAuth": []
                     }
                 ]
-            },
+            }
+        },
+        "/api/auth/register-public": {
             "post": {
                 "tags": [
                     "Users"
                 ],
-                "summary": "Create a new user",
-                "operationId": "592819a0265360b2014512d6dbfaf0e7",
+                "summary": "Register a new public user",
+                "operationId": "3189611c7c9815c89ee2d08415af12eb",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1512,12 +1691,12 @@
                     }
                 ]
             },
-            "post": {
+            "put": {
                 "tags": [
                     "Users"
                 ],
                 "summary": "Update a user",
-                "operationId": "5dffc13650a9258709dafdf024abddb4",
+                "operationId": "b9091397c8b25f12c6adb74be6ce3a5a",
                 "parameters": [
                     {
                         "name": "id",
@@ -2067,6 +2246,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
         {
             "name": "Clubs",
             "description": "Clubs"

@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use GuzzleHttp\Psr7\Request;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class ClubUser extends Model
 {
+    use HasUuids;
+
     protected $table = "club_user";
     protected $fillable = [
         'user_id',
@@ -15,9 +18,7 @@ class ClubUser extends Model
         'status',
         'joined_at',
     ];
-    protected $guarded = [
-        'id',
-    ];
+    protected $guarded = [];
 
     public function user()
     {
