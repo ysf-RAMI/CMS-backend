@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Club;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log; // Make sure this line is present
 use Illuminate\Support\Str;
 
 class EventController extends Controller
@@ -22,7 +23,8 @@ class EventController extends Controller
      * )
      */
     public function index()
-    {               Event::all();
+    {
+        Event::all();
         $events = Event::with(["users"])->orderBy("created_at", "desc")->get();
         return response()->json($events);
     }
@@ -60,7 +62,7 @@ class EventController extends Controller
      *     )
      * )
      */
-    public function store(Request $request)
+    public function add(Request $request)
     {
         $validatedData = $request->validate([
             "club_id" => "required",
@@ -72,7 +74,7 @@ class EventController extends Controller
             "max_participants" => "required|integer|min:0",
         ]);
 
-        
+
 
         $validatedData['created_by'] = auth()->id();
 
@@ -170,6 +172,8 @@ class EventController extends Controller
      */
     public function update(Request $request, $id)
     {
+        Log::info('EventController@update: Incoming request data', $request->all());
+
         $event = Event::findOrFail($id);
 
         $validatedData = $request->validate([
@@ -181,6 +185,8 @@ class EventController extends Controller
             'max_participants' => 'sometimes|integer|min:0',
             'status' => 'sometimes|string|in:pending,approved,rejected', // Added status validation
         ]);
+
+        Log::info('EventController@update: Validated data before image processing', $validatedData);
 
         if ($request->hasFile('image')) {
             // Delete old image if it exists
@@ -201,7 +207,12 @@ class EventController extends Controller
             unset($validatedData['image']);
         }
 
+        Log::info('EventController@update: Data before update', $validatedData);
+
         $event->update($validatedData);
+
+        Log::info('EventController@update: Event after update', $event->toArray());
+
         return response()->json($event);
     }
 
@@ -248,31 +259,38 @@ class EventController extends Controller
             return response()->json(['message' => 'Event not found'], 404);
         }
         $event->delete();
-        return response()->json( 'Event deleted successfully', 200);
+        return response()->json('Event deleted successfully', 200);
     }
 
 
 
-    
+
 
     /**
      * @OA\Put(
-     *     path="/api/event/status/{id}",
-     *     summary="Accept an event",
+     *     path="/api/events/{event}/status",
+     *     summary="Change event status",
      *     tags={"Events"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="event",
      *         in="path",
      *         required=true,
-     *         description="ID of the event to accept",
+     *         description="ID of the event to update status for",
      *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"pending", "approved", "rejected"}, example="approved")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Event approved successfully",
+     *         description="Event status updated successfully",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Event approved successfully"),
+     *             @OA\Property(property="message", type="string", example="Event status updated successfully"),
      *             @OA\Property(property="event", ref="#/components/schemas/Event")
      *         )
      *     ),
@@ -289,21 +307,26 @@ class EventController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized.")
+     *         )
      *     )
      * )
      */
-    public function accepteEvent($id)
+    public function updateStatus(Request $request, Event $event)
     {
-        $event = Event::find($id);
+        $validatedData = $request->validate([
+            'status' => 'required|string|in:pending,approved,rejected',
+        ]);
 
-        if (!$event) {
-            return response()->json(['message' => 'Event not found'], 404);
-        }
-
-        $event->status = 'approved';
+        $event->status = $validatedData['status'];
         $event->save();
 
-        return response()->json(['message' => 'Event approved successfully', 'event' => $event], 200);
+        return response()->json(['event' => $event], 200);
     }
 
 }

@@ -24,18 +24,19 @@ Route::middleware('auth:api')->group(function () {
 
     // Admin api
     Route::middleware('role:admin')->group(function () {
+        Route::put('/events/{event}/status', [EventController::class, 'updateStatus']);
         Route::post('/clubs', [ClubController::class, 'store']);
         Route::put('/clubs/{id}', [ClubController::class, 'update']);
         Route::delete('/clubs/{club}', [ClubController::class, 'destroy']);
-        Route::put('/event/status/{id}', [EventController::class, 'accepteEvent']);
+        Route::put('/clubs/{club}/admin', [ClubController::class, 'makeAdmin']);
     });
 
     // AdminMember api 
     Route::middleware('role:admin-member')->group(function () {
-        Route::post('/clubs/approve-student', [ClubController::class, 'approveStudent']);
-        Route::post('/event', [EventController::class, 'store']);
-        Route::put('/event/{event}', [EventController::class, 'update']);
-        Route::delete('/event/{event}', [EventController::class, 'destroy']);
+        Route::post('/events', [EventController::class, 'add']);
+        Route::put('/events/{event}', [EventController::class, 'update']);
+        Route::delete('/events/{event}', [EventController::class, 'destroy']);
+        Route::post('/clubs/{club}/approve-student', [ClubController::class, 'joinStudent']);
         Route::post('/events/{event}/approve/{userId}', [EventController::class, 'approveRegistration']);
         Route::get('/clubs/event', function () {
             return response()->json(['message' => 'Club Event Access Granted'], 200);
@@ -49,7 +50,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Student , Member , AdminMemeber api
     Route::middleware('role:student,member,admin-member')->group(function () {
-        Route::post('/event/register', [EventRegistrationController::class, 'store']);
+        Route::post('/events/register/{event_id}', [EventRegistrationController::class, 'store']);
+        Route::post('/clubs/join/{club_id}', [ClubController::class, 'joinclub']);
     });
 
     // All Users Type api
@@ -64,10 +66,9 @@ Route::group(['middleware' => ['api']], function () {
     // Public Club controller 
     Route::get('/clubs/{club}', [ClubController::class, 'show']);
     Route::get('/clubs', [ClubController::class, 'index']);
-    Route::post('/clubs/join', [ClubController::class, 'joinclub']);
-
 
     // Public Event Controller
+    Route::get('/events/register', [EventRegistrationController::class, 'index']); // Must be before /events/{event}
     Route::get('/events/{event}', [EventController::class, 'show']);
     Route::get('/events', [EventController::class, 'index']);
 

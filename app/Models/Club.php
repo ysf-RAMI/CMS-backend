@@ -88,7 +88,7 @@ class Club extends Model
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'club_user', 'club_id', 'user_id')->withPivot('role');
+        return $this->belongsToMany(User::class, 'club_user', 'club_id', 'user_id')->withPivot('role', 'status');
     }
     /**
      * The events that belong to the Club

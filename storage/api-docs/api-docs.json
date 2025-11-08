@@ -182,6 +182,86 @@
                 ]
             }
         },
+        "/api/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "operationId": "93da61e438e234895c9a4f449dd94693",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Register Succefly"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error or user already exists",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/clubs": {
             "get": {
                 "tags": [
@@ -518,13 +598,26 @@
                 ]
             }
         },
-        "/api/clubs/approve-student": {
+        "/api/clubs/{club}/approve-student": {
             "post": {
                 "tags": [
                     "Clubs"
                 ],
-                "summary": "Approve a student to join a club",
-                "operationId": "b8578623a92ef6ef4466ac7ce8125b41",
+                "summary": "Approve or reject a student's club membership request",
+                "operationId": "140101c0f4f6fb39c65fb5d2a608115d",
+                "parameters": [
+                    {
+                        "name": "club",
+                        "in": "path",
+                        "description": "UUID of the club",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "some-club-uuid"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -532,7 +625,7 @@
                             "schema": {
                                 "required": [
                                     "user_id",
-                                    "club_id"
+                                    "status"
                                 ],
                                 "properties": {
                                     "user_id": {
@@ -540,10 +633,13 @@
                                         "format": "uuid",
                                         "example": "some-user-uuid"
                                     },
-                                    "club_id": {
+                                    "status": {
                                         "type": "string",
-                                        "format": "uuid",
-                                        "example": "some-club-uuid"
+                                        "enum": [
+                                            "approved",
+                                            "rejected"
+                                        ],
+                                        "example": "approved"
                                     }
                                 },
                                 "type": "object"
@@ -553,14 +649,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Student approved and added to club as member",
+                        "description": "Student status updated successfully (approved or rejected)",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Student approved and added to club as member"
+                                            "example": "Student status updated successfully"
                                         }
                                     },
                                     "type": "object"
@@ -698,6 +794,99 @@
                 ]
             }
         },
+        "/api/clubs/{club}/admin": {
+            "put": {
+                "tags": [
+                    "Clubs"
+                ],
+                "summary": "Promote a member to admin",
+                "operationId": "6d380bc510214a66ba4003ba38731ef4",
+                "parameters": [
+                    {
+                        "name": "club",
+                        "in": "path",
+                        "description": "ID of the club",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "some-user-uuid"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Member promoted to admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Member promoted to admin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Member not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Member not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/events": {
             "get": {
                 "tags": [
@@ -726,7 +915,7 @@
                     "Events"
                 ],
                 "summary": "Create a new event",
-                "operationId": "508895e03d7f10edac84357084c87b20",
+                "operationId": "aecf78e6616474edea1706a2a6dd0645",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1056,18 +1245,18 @@
                 ]
             }
         },
-        "/api/event/status/{id}": {
+        "/api/events/{event}/status": {
             "put": {
                 "tags": [
                     "Events"
                 ],
-                "summary": "Accept an event",
-                "operationId": "4b706a63ba3e9d02a0c1e10ade076a8a",
+                "summary": "Change event status",
+                "operationId": "ef4ea5486217d4faa562b36dff3cde32",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "event",
                         "in": "path",
-                        "description": "ID of the event to accept",
+                        "description": "ID of the event to update status for",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -1075,16 +1264,40 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "approved",
+                                            "rejected"
+                                        ],
+                                        "example": "approved"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Event approved successfully",
+                        "description": "Event status updated successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Event approved successfully"
+                                            "example": "Event status updated successfully"
                                         },
                                         "event": {
                                             "$ref": "#/components/schemas/Event"
@@ -1126,6 +1339,22 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1135,13 +1364,14 @@
                 ]
             }
         },
-        "/api/event-registrations": {
+        "/api/events/register": {
             "get": {
                 "tags": [
                     "Event Registrations"
                 ],
                 "summary": "Get all event registrations",
-                "operationId": "ba5f7587da12c9220a306470591f05fc",
+                "description": "Get all event registrations. This is a public endpoint, no authentication required.",
+                "operationId": "93d1422999b9870f402d2b004fac6d27",
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -1156,45 +1386,28 @@
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
+                }
+            }
+        },
+        "/api/events/register/{event_id}": {
             "post": {
                 "tags": [
                     "Event Registrations"
                 ],
                 "summary": "Register for an event",
-                "operationId": "fdca6670154317f60a0a01f199363212",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "event_id",
-                                    "user_id"
-                                ],
-                                "properties": {
-                                    "event_id": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "example": "l6k7j8h9-0123-45gf-dsaq-wertyuioplkj"
-                                    },
-                                    "user_id": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "example": "some-user-uuid"
-                                    }
-                                },
-                                "type": "object"
-                            }
+                "operationId": "88d63af8bc191e0139aa02ea7b8eda4c",
+                "parameters": [
+                    {
+                        "name": "event_id",
+                        "in": "path",
+                        "description": "ID of the event to register for",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
-                },
+                ],
                 "responses": {
                     "201": {
                         "description": "Successfully registered for the event",
@@ -1506,110 +1719,6 @@
                                     "items": {
                                         "$ref": "#/components/schemas/User"
                                     }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/auth/register-public": {
-            "post": {
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Register a new public user",
-                "operationId": "3189611c7c9815c89ee2d08415af12eb",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "email",
-                                    "password",
-                                    "department"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "John Doe"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "john.doe@example.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "secret"
-                                    },
-                                    "role": {
-                                        "type": "string",
-                                        "enum": [
-                                            "admin",
-                                            "admin-member",
-                                            "member",
-                                            "student"
-                                        ],
-                                        "example": "student"
-                                    },
-                                    "department": {
-                                        "type": "string",
-                                        "example": "Computer Science"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "User created successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "User already exists"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthenticated."
-                                        }
-                                    },
-                                    "type": "object"
                                 }
                             }
                         }
@@ -2185,7 +2294,7 @@
                 "description": "User model",
                 "properties": {
                     "id": {
-                        "description": "Unique identifier for the user",
+                        "description": "UUID of the user",
                         "type": "string",
                         "format": "uuid"
                     },
@@ -2194,14 +2303,9 @@
                         "type": "string"
                     },
                     "email": {
-                        "description": "Email address of the user",
+                        "description": "Email of the user",
                         "type": "string",
                         "format": "email"
-                    },
-                    "password": {
-                        "description": "Hashed password of the user",
-                        "type": "string",
-                        "format": "password"
                     },
                     "role": {
                         "description": "Role of the user",
@@ -2218,21 +2322,24 @@
                         "type": "string"
                     },
                     "image": {
-                        "description": "Path to the user's profile image",
+                        "description": "Image URL of the user",
                         "type": "string"
                     },
                     "created_at": {
-                        "description": "Date and time when the user was created",
+                        "description": "Creation timestamp",
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
-                        "description": "Date and time when the user was last updated",
+                        "description": "Last update timestamp",
                         "type": "string",
                         "format": "date-time"
                     }
                 },
-                "type": "object"
+                "type": "object",
+                "xml": {
+                    "name": "User"
+                }
             }
         },
         "securitySchemes": {

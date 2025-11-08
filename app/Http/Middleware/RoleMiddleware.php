@@ -28,11 +28,13 @@ class RoleMiddleware
         Log::channel('single')->info('RoleMiddleware: User authenticated', ['user_id' => $user->id, 'user_email' => $user->email, 'user_role' => $user->role]);
         $userRole = $user->role;
 
+        Log::channel('single')->info('RoleMiddleware: Raw user role - ' . $userRole);
         
         // Convert user role to camelCase for comparison
         $userRoleCamelCase = Str::camel($userRole);
         $camelCaseRoles = array_map(fn($role) => Str::camel($role), $roles);
         Log::channel('single')->info('RoleMiddleware: Incoming primary role - '. $userRoleCamelCase .', Required roles - '. implode(',', $camelCaseRoles));
+        Log::channel('single')->info('RoleMiddleware: Checking primary role condition: ($userRoleCamelCase !== "member" && in_array($userRoleCamelCase, $camelCaseRoles))');
         
         if ($userRoleCamelCase !== 'member' && in_array($userRoleCamelCase, $camelCaseRoles)) {
             Log::channel('single')->info('RoleMiddleware: User primary role matched (non-member)', ['role' => $userRoleCamelCase]);
@@ -49,6 +51,7 @@ class RoleMiddleware
                 $pivotRoleCamelCase = Str::camel($pivotRole);
                 if (in_array($pivotRoleCamelCase, $camelCaseRoles)) {
                     Log::channel('single')->info('RoleMiddleware: Club-specific role matched', ['club_id' => $club->id, 'pivot_role' => $pivotRoleCamelCase]);
+                    Log::channel('single')->info('RoleMiddleware: Executing next request for club-specific role.');
                     return $next($request);
                 }
             }

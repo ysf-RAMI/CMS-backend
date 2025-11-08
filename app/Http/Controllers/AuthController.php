@@ -82,13 +82,18 @@ class AuthController extends Controller
         return $this->respondWithToken($token, $role);
     }
 
-    protected function respondWithToken($token, $role)
+    protected function respondWithToken($token, $role = null)
     {
-        return response()->json([
+        $payload = [
             'access_token' => $token,
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
-            "role" => $role,
-        ]);
+        ];
+
+        if ($role) {
+            $payload['role'] = $role;
+        }
+
+        return response()->json($payload);
     }
 
     /**
@@ -219,8 +224,45 @@ class AuthController extends Controller
      * )
      */
 
+    /**
+     * @OA\Post(
+     *     path="/api/auth/register",
+     *     summary="Register a new user",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","password"},
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="secret")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User registered successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="user", type="object"),
+     *             @OA\Property(property="message", type="string", example="Register Succefly")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error or user already exists",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:user',
+            'password' => 'required|string|min:6',
+        ]);
 
         $email = $request['email'];
         if (User::where('email', $email)->first()) {

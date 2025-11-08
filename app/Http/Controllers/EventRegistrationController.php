@@ -13,10 +13,10 @@ class EventRegistrationController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/event-registrations",
+     *     path="/api/events/register",
      *     summary="Get all event registrations",
+     *     description="Get all event registrations. This is a public endpoint, no authentication required.",
      *     tags={"Event Registrations"},
-     *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
@@ -26,22 +26,22 @@ class EventRegistrationController extends Controller
      */
     public function index()
     {
-        return EventRegistration::with(['event', 'user'])->get();
+        $registrations = EventRegistration::with(['event', 'user'])->get();
+        return response()->json($registrations, 200);
     }
 
     /**
      * @OA\Post(
-     *     path="/api/event-registrations",
+     *     path="/api/events/register/{event_id}",
      *     summary="Register for an event",
      *     tags={"Event Registrations"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
+     *     @OA\Parameter(
+     *         name="event_id",
+     *         in="path",
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"event_id","user_id"},
-     *             @OA\Property(property="event_id", type="string", format="uuid", example="l6k7j8h9-0123-45gf-dsaq-wertyuioplkj"),
-     *             @OA\Property(property="user_id", type="string", format="uuid", example="some-user-uuid")
-     *         )
+     *         description="ID of the event to register for",
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
      *         response=201,
@@ -71,20 +71,17 @@ class EventRegistrationController extends Controller
      *     )
      * )
      */
-    public function store(AddEventRegistration $request)
+    public function store($event_id)
     {
-        $validatedData = $request->validated();
-        $eventId = $validatedData['event_id'];
-        $userId = $validatedData['user_id'];
-
-        $event = Event::find($eventId);
+        $userId = auth()->user()->id;
+        $event = Event::find($event_id);
 
         if (!$event) {
             return response()->json(['message' => 'Event not found'], 404);
         }
 
         // Check if the user is already registered for this event
-        $existingRegistration = EventRegistration::where('event_id', $eventId)
+        $existingRegistration = EventRegistration::where('event_id', $event_id)
             ->where('user_id', $userId)
             ->first();
 
@@ -93,15 +90,15 @@ class EventRegistrationController extends Controller
         }
 
         // Check if there are available spots
-        $registeredParticipantsCount = EventRegistration::where('event_id', $eventId)->count();
+        $registeredParticipantsCount = EventRegistration::where('event_id', $event_id)->count();
 
         if ($registeredParticipantsCount >= $event->max_participants) {
             return response()->json(['message' => 'No places available, event is full'], 400);
         }
 
         $eventRegistration = EventRegistration::create([
-            'event_id' => $validatedData['event_id'],
-            'user_id' => $validatedData['user_id'],
+            'event_id' => $event_id,
+            'user_id' => $userId,
             'registered_at' => now(),
             'status' => 'pending',
         ]);
@@ -200,7 +197,13 @@ class EventRegistrationController extends Controller
 
         $eventRegistration->update($request->all());
 
-        return response()->json($eventRegistration);
+        // Refresh the model to get updated data from database
+        $eventRegistration->refresh();
+
+        // Load relationships
+        $eventRegistration->load(['event', 'user']);
+
+        return response()->json($eventRegistration, 200);
     }
 
     /**

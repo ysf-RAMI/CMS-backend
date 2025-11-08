@@ -25,8 +25,8 @@ class ClubController extends Controller
      */
     public function index()
     {
-        return Club::with(["users", "events"])->get();
-      } 
+        return Club::with(["users", "events"])->withCount('users')->orderBy('users_count', 'desc')->get();
+    }
 
     /**
      * @OA\Post(
@@ -61,6 +61,12 @@ class ClubController extends Controller
      */
     public function store(Request $request)
     {
+        Log::info('ClubController@store: Request received.', [
+            'Authorization_Header' => $request->header('Authorization'),
+            'Auth_Check' => auth()->check(),
+            'Auth_ID' => auth()->id(),
+        ]);
+
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -80,7 +86,7 @@ class ClubController extends Controller
         } else {
             $validatedData['image'] = 'images/default_club_image.jpg'; // Set default image
         }
-      
+
         $validatedData['created_by'] = auth()->id();
         try {
             $club = Club::create($validatedData);
@@ -246,33 +252,44 @@ class ClubController extends Controller
      */
     public function destroy(string $id)
     {
-        $club = Club::find($id);    
+        $club = Club::find($id);
         if (!$club) {
-            return response()->json(['message'=>'Club not found'], 404);
+            return response()->json(['message' => 'Club not found'], 404);
         }
         $club->delete();
-        return response()->json(['message'=>'Club deleted successfully'], 204);
+        return response()->json(['message' => 'Club deleted successfully'], 204);
     }
 
     /**
      * @OA\Post(
-     *     path="/api/clubs/approve-student",
-     *     summary="Approve a student to join a club",
+     *     path="/api/clubs/{club}/approve-student",
+     *     summary="Approve or reject a student's club membership request",
      *     tags={"Clubs"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="club",
+     *         in="path",
+     *         required=true,
+     *         description="UUID of the club",
+     *         @OA\Schema(
+     *             type="string",
+     *             format="uuid",
+     *             example="some-club-uuid"
+     *         )
+     *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"user_id","club_id"},
+     *             required={"user_id", "status"},
      *             @OA\Property(property="user_id", type="string", format="uuid", example="some-user-uuid"),
-     *             @OA\Property(property="club_id", type="string", format="uuid", example="some-club-uuid")
+     *             @OA\Property(property="status", type="string", enum={"approved", "rejected"}, example="approved")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Student approved and added to club as member",
+     *         description="Student status updated successfully (approved or rejected)",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Student approved and added to club as member")
+     *             @OA\Property(property="message", type="string", example="Student status updated successfully")
      *         )
      *     ),
      *     @OA\Response(
@@ -291,10 +308,13 @@ class ClubController extends Controller
      *     )
      * )
      */
-    public function approveStudent(Request $request)
+    public function joinStudent(Request $request, Club $club)
     {
         $user_id = $request['user_id'];
-        $club_id = $request['club_id'];
+        $status = $request['status'];
+        if (!$club) {
+            return response()->json(['message' => 'Club not found'], 404);
+        }
 
         $user = User::find($user_id);
 
@@ -303,19 +323,24 @@ class ClubController extends Controller
         }
 
         // Update user's role to 'member' if they are a student
-        if ($user->role === 'student') {
+        if ($user->role === 'student' && $status === 'approved') {
             $user->role = 'member';
             $user->save();
         }
 
         // Find or create ClubUser entry
         $clubUser = ClubUser::firstOrNew(
-            ['user_id' => $user_id, 'club_id' => $club_id]
+            ['user_id' => $user_id, 'club_id' => $club->id]
         );
 
+        if ($status === 'rejected') {
+            $clubUser->delete();
+            return response()->json(['message' => 'Student request rejected and removed from club'], 200);
+        }
+
         $clubUser->role = 'member';
-        $clubUser->status = 'approved'; 
-        $clubUser->joined_at = now(); 
+        $clubUser->status = $status;
+        $clubUser->joined_at = now();
         $clubUser->save();
 
         return response()->json(['message' => 'Student approved and added to club as member'], 200);
@@ -360,36 +385,108 @@ class ClubController extends Controller
      *     )
      * )
      */
-    public function joinclub(Request $request){
-        $user_id = $request['user_id'];
-        $club_id = $request['club_id'];
+    public function joinclub($club_id)
+    {
+        try {
+            $user = auth()->user();
 
-        $user = User::find($user_id);
+            if (!$user) {
+                \Log::error('Join Club: Unauthenticated user attempting to join club.', ['club_id' => $club_id]);
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
 
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+            $user_id = $user->id;
+
+            \Log::info('Join Club: User attempting to join club.', ['user_id' => $user_id, 'club_id' => $club_id]);
+
+            $foundUser = User::find($user_id);
+
+            if (!$foundUser) {
+                \Log::error('Join Club: User not found in database.', ['user_id' => $user_id, 'club_id' => $club_id]);
+                return response()->json(['message' => 'User not found'], 404);
+            }
+
+            // Find or create ClubUser entry
+            $clubUser = ClubUser::firstOrNew(
+                ['user_id' => $user_id, 'club_id' => $club_id]
+            );
+
+            $clubUser->role = 'student'; // Set role to 'student' as they are requesting to join
+            $clubUser->status = 'pending';
+            $clubUser->joined_at = now();
+            $clubUser->save();
+
+            \Log::info('Join Club: User successfully requested to join club.', ['user_id' => $user_id, 'club_id' => $club_id]);
+            return response()->json(['message' => 'Student added as pending to join the club'], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Join Club: An unexpected error occurred.', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'club_id' => $club_id,
+                'user_id' => auth()->check() ? auth()->user()->id : 'unauthenticated'
+            ]);
+            return response()->json(['message' => 'An unexpected error occurred.'], 500);
         }
-
-        // Update user's role to 'member' if they are a student
-        if ($user->role === 'student') {
-            $user->role = 'member';
-            $user->save();
-        }
-
-        // Find or create ClubUser entry
-        $clubUser = ClubUser::firstOrNew(
-            ['user_id' => $user_id, 'club_id' => $club_id]
-        );
-
-        $clubUser->role = 'member';
-        $clubUser->status = 'pending';
-        $clubUser->joined_at = now();
-        $clubUser->save();
-
-        return response()->json(['message' => 'Student added as pending to join the club'], 200);
-
-
     }
 
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/clubs/{club}/admin",
+     *     summary="Promote a member to admin",
+     *     tags={"Clubs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="club",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the club",
+     *         @OA\Schema(
+     *             type="string",
+     *             format="uuid"
+     *         )
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="user_id", type="string", format="uuid", example="some-user-uuid")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Member promoted to admin",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Member promoted to admin")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Member not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Member not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
+    public function makeAdmin(Club $club, Request $request)
+    {
+        $clubUser = ClubUser::where('club_id', $club->id)->where('user_id', $request->input('user_id'))->first();
+        if (!$clubUser) {
+            return response()->json(['message' => 'Member not found'], 404);
+        }
+        $clubUser->role = 'admin-member';
+        $clubUser->save();
+        return response()->json(['message' => 'Member promoted to admin'], 200);
+    }
 
 }

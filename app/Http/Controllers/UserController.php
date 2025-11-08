@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserRequest;
+use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Support\Str;
 use Log;
 use Nette\Utils\Strings;
@@ -80,7 +81,7 @@ class UserController extends Controller
      *     )
      * )
      */
-    
+
 
     /**
      * @OA\Get(
@@ -125,7 +126,7 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        return new UserResource($user->load(['clubs', 'events']));
+        return response()->json($user->load(['clubs', 'events']));
     }
 
     /**
@@ -211,10 +212,13 @@ class UserController extends Controller
         // 5. Refresh to get the updated data from database
         $user->refresh();
 
-        // 6. Return success response with updated user
+        // 6. Load relationships
+        $user->load(['clubs', 'events']);
+
+        // 7. Return success response with updated user
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => new UserResource($user->load(['clubs', 'events']))
+            'user' => new UserResource($user)
         ], 200);
     }
 

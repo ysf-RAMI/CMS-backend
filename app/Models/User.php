@@ -11,14 +11,14 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
  * @OA\Schema(
- *     schema="User",
  *     title="User",
  *     description="User model",
+ *     @OA\Xml(name="User"),
  *     @OA\Property(
  *         property="id",
  *         type="string",
  *         format="uuid",
- *         description="Unique identifier for the user"
+ *         description="UUID of the user"
  *     ),
  *     @OA\Property(
  *         property="name",
@@ -29,13 +29,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  *         property="email",
  *         type="string",
  *         format="email",
- *         description="Email address of the user"
- *     ),
- *     @OA\Property(
- *         property="password",
- *         type="string",
- *         format="password",
- *         description="Hashed password of the user"
+ *         description="Email of the user"
  *     ),
  *     @OA\Property(
  *         property="role",
@@ -51,19 +45,19 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  *     @OA\Property(
  *         property="image",
  *         type="string",
- *         description="Path to the user's profile image"
+ *         description="Image URL of the user"
  *     ),
  *     @OA\Property(
  *         property="created_at",
  *         type="string",
  *         format="date-time",
- *         description="Date and time when the user was created"
+ *         description="Creation timestamp"
  *     ),
  *     @OA\Property(
  *         property="updated_at",
  *         type="string",
  *         format="date-time",
- *         description="Date and time when the user was last updated"
+ *         description="Last update timestamp"
  *     )
  * )
  */
@@ -71,17 +65,51 @@ class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable, HasUuids;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'user';
     protected $keyType = 'string';
     public $incrementing = false;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'department', 'image'
+        'name',
+        'email',
+        'password',
+        'role',
+        'department',
+        'image'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
     // Relationship with clubs (many-to-many)
-    public function clubs():
-        BelongsToMany
+    public function clubs(): BelongsToMany
     {
         return $this->belongsToMany(Club::class)
             ->withPivot('role'); // Include 'role' from pivot table

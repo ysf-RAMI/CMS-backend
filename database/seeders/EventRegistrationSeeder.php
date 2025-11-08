@@ -2,8 +2,12 @@
 
 namespace Database\Seeders;
 
+
+use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
@@ -16,19 +20,24 @@ class EventRegistrationSeeder extends Seeder
      */
     public function run(): void
     {
+        $firstUser = User::first();
+        $firstEvent = Event::first();
+
         $data = [
             'event_registration' => [
                 [
-                    'id' => 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-                    'eventId' => 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-                    'userId' => 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+                    'id' => Str::uuid(),
+                    'event_id' => $firstEvent->id,
+                    'user_id' => $firstUser->id,
                     'registered_at' => '2024-01-01 10:00:00',
+                    'status' => 'approved',
                 ],
                 [
-                    'id' => 'b1fccb00-0d1c-4ff9-cc7e-7cc0ce491b22',
-                    'eventId' => 'b1fccb00-0d1c-4ff9-cc7e-7cc0ce491b22',
-                    'userId' => 'b1fccb00-0d1c-4ff9-cc7e-7cc0ce491b22',
+                    'id' => Str::uuid(),
+                    'event_id' => $firstEvent->id,
+                    'user_id' => $firstUser->id,
                     'registered_at' => '2024-01-02 11:00:00',
+                    'status' => 'approved',
                 ],
             ],
         ];
@@ -36,9 +45,10 @@ class EventRegistrationSeeder extends Seeder
         foreach ($data['event_registration'] as $eventRegistrationData) {
             EventRegistration::create([
                 'id' => $eventRegistrationData['id'],
-                'event_id' => $eventRegistrationData['eventId'],
-                'user_id' => $eventRegistrationData['userId'],
+                'event_id' => $eventRegistrationData['event_id'],
+                'user_id' => $eventRegistrationData['user_id'],
                 'registered_at' => Carbon::parse($eventRegistrationData['registered_at']),
+                'status' => $eventRegistrationData['status'],
             ]);
         }
     }
