@@ -68,8 +68,8 @@ class Club extends Model
     use HasFactory;
 
     protected $table = "club";
-    protected $primaryKey = 'id'; 
-    public $incrementing = false; 
+    protected $primaryKey = 'id';
+    public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -80,6 +80,14 @@ class Club extends Model
         'max_members',
         'created_by',
     ];
+
+    /**
+     * Get the club's image with default fallback.
+     */
+    public function getImageAttribute($value)
+    {
+        return $value ?: '/images/default_club_image.jpg';
+    }
 
     /**
      * The users that belong to the Club

@@ -82,9 +82,9 @@ class ClubController extends Controller
             $extension = $image->getClientOriginalExtension();
             $imageName = \Illuminate\Support\Str::uuid() . '_' . time() . '.' . $extension;
             $image->move(public_path('images'), $imageName);
-            $validatedData['image'] = 'images/' . $imageName;
+            $validatedData['image'] = '/images/' . $imageName;
         } else {
-            $validatedData['image'] = 'images/default_club_image.jpg'; // Set default image
+            $validatedData['image'] = '/images/default_club_image.jpg'; // Set default image
         }
 
         $validatedData['created_by'] = auth()->id();
@@ -203,7 +203,7 @@ class ClubController extends Controller
             $extension = $image->getClientOriginalExtension();
             $imageName = \Illuminate\Support\Str::uuid() . '_' . time() . '.' . $extension;
             $image->move(public_path('images'), $imageName);
-            $validatedData['image'] = 'images/' . $imageName;
+            $validatedData['image'] = '/images/' . $imageName;
         }
 
         $club->update($validatedData);

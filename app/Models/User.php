@@ -108,6 +108,14 @@ class User extends Authenticatable implements JWTSubject
         'password' => 'hashed',
     ];
 
+    /**
+     * Get the user's image with default fallback.
+     */
+    public function getImageAttribute($value)
+    {
+        return $value ?: '/images/default_user_image.jpg';
+    }
+
     // Relationship with clubs (many-to-many)
     public function clubs(): BelongsToMany
     {

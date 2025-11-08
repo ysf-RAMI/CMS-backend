@@ -113,6 +113,14 @@ class Event extends Model
 
     protected $appends = ['club_info'];
 
+    /**
+     * Get the event's image with default fallback.
+     */
+    public function getImageAttribute($value)
+    {
+        return $value ?: '/images/default_event_image.jpg';
+    }
+
     public function getClubInfoAttribute()
     {
         return $this->club ? $this->club->only('id', 'name') : null;
