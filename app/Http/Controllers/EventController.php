@@ -262,10 +262,6 @@ class EventController extends Controller
         return response()->json('Event deleted successfully', 200);
     }
 
-
-
-
-
     /**
      * @OA\Put(
      *     path="/api/events/{event}/status",
