@@ -6,6 +6,7 @@ use App\Models\Club;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log; // Make sure this line is present
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class EventController extends Controller
@@ -24,8 +25,13 @@ class EventController extends Controller
      */
     public function index()
     {
-        Event::all();
-        $events = Event::with(["users"])->orderBy("created_at", "desc")->get();
+        // Cache events for 5 minutes
+        $events = Cache::remember('events.all', 300, function () {
+            return Event::with(['users', 'club'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        });
+
         return response()->json($events);
     }
 
@@ -321,6 +327,9 @@ class EventController extends Controller
 
         $event->status = $validatedData['status'];
         $event->save();
+
+        // Clear events cache when data changes
+        Cache::forget('events.all');
 
         return response()->json(['event' => $event], 200);
     }

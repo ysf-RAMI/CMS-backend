@@ -7,6 +7,7 @@ use App\Models\ClubUser;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\UniqueConstraintViolationException;
 
 class ClubController extends Controller
@@ -25,7 +26,13 @@ class ClubController extends Controller
      */
     public function index()
     {
-        return Club::with(["users", "events"])->withCount('users')->orderBy('users_count', 'desc')->get();
+        // Cache clubs for 5 minutes
+        return Cache::remember('clubs.all', 300, function () {
+            return Club::with(['users', 'events'])
+                ->withCount('users')
+                ->orderBy('users_count', 'desc')
+                ->get();
+        });
     }
 
     /**
