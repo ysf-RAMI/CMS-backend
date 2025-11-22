@@ -1,7 +1,7 @@
 # ---------------------------------------------
 # 1. Use official PHP image with extensions
 # ---------------------------------------------
-FROM php:8.2-fpm
+FROM php:8.3-fpm
 
 # 2. Install system dependencies and PHP extensions
 RUN apt-get update \
