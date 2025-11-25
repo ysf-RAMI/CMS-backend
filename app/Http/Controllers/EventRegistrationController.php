@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AddEventRegistration;
+use App\Models\ClubUser;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use App\Services\CacheInvalidationService;
 
 class EventRegistrationController extends Controller
 {
@@ -103,7 +105,14 @@ class EventRegistrationController extends Controller
             'status' => 'pending',
         ]);
 
-        return response()->json($eventRegistration, 201);
+        \Illuminate\Support\Facades\Cache::forget('events.all'); // Clear events cache
+        return response()->json([
+            'id' => $eventRegistration->id,
+            'status' => $eventRegistration->status,
+            'registered_at' => $eventRegistration->registered_at,
+            'event' => $eventRegistration->event,
+            'user' => $eventRegistration->user,
+        ], 201);
     }
 
     /**
@@ -253,5 +262,138 @@ class EventRegistrationController extends Controller
         $eventRegistration->delete();
 
         return response()->json(['message' => 'Event Registration deleted successfully']);
+    }
+
+    public function getUserRegisteredEvents(Request $request, $userId)
+    {
+        $status = $request->query('status', 'all');
+        $page = $request->query('page', 1);
+        $limit = $request->query('limit', 10);
+
+        $query = EventRegistration::where('user_id', $userId)->with('event');
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $registrations = $query->paginate($limit, ['*'], 'page', $page);
+
+        $data = $registrations->map(function ($registration) {
+            return [
+                'id' => $registration->event->id,
+                'title' => $registration->event->title,
+                'description' => $registration->event->description,
+                'date' => $registration->event->date,
+                'location' => $registration->event->location,
+                'image' => $registration->event->image,
+                'pivot' => [
+                    'status' => $registration->status,
+                    'registered_at' => $registration->registered_at,
+                    // add more pivot fields if needed
+                ]
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'page' => $registrations->currentPage(),
+                'limit' => $registrations->perPage(),
+                'total' => $registrations->total(),
+            ]
+        ]);
+    }
+
+    public function getEventRegistrations(Request $request, $eventId)
+    {
+        $user = auth()->user();
+        $event = Event::find($eventId);
+        if (!$event) {
+            return response()->json(['message' => 'Event not found'], 404);
+        }
+        $clubUser = ClubUser::where('club_id', $event->club_id)->where('user_id', $user->id)->where('role', 'admin-member')->first();
+        if (!$clubUser) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $status = $request->query('status', 'all');
+        $page = $request->query('page', 1);
+        $limit = $request->query('limit', 50);
+
+        $query = EventRegistration::where('event_id', $eventId)->with('user');
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $registrations = $query->paginate($limit, ['*'], 'page', $page);
+
+        $data = $registrations->map(function ($reg) {
+            return [
+                'user' => [
+                    'id' => $reg->user->id,
+                    'name' => $reg->user->name,
+                    'email' => $reg->user->email,
+                ],
+                'pivot' => [
+                    'id' => $reg->id,
+                    'status' => $reg->status,
+                    'registered_at' => $reg->registered_at,
+                ]
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'page' => $registrations->currentPage(),
+                'limit' => $registrations->perPage(),
+                'total' => $registrations->total(),
+            ]
+        ]);
+    }
+
+    public function approveRegistration(Request $request, $eventId)
+    {
+        $request->validate([
+            'user_id' => 'required|uuid',
+            'status' => 'required|in:approved,rejected',
+        ]);
+
+        $user = auth()->user();
+        $event = Event::find($eventId);
+        if (!$event) {
+            return response()->json(['message' => 'Event not found'], 404);
+        }
+        $clubUser = ClubUser::where('club_id', $event->club_id)->where('user_id', $user->id)->where('role', 'admin-member')->first();
+        if (!$clubUser) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $registration = EventRegistration::where('event_id', $eventId)->where('user_id', $request->user_id)->first();
+        if (!$registration) {
+            return response()->json(['message' => 'Registration not found'], 404);
+        }
+
+        $registration->status = $request->status;
+        $registration->save();
+
+        \App\Services\CacheInvalidationService::clearEvents(); // Clear events cache
+        return response()->json([
+            'success' => true,
+            'registration' => [
+                'id' => $registration->id,
+                'status' => $registration->status,
+                'registered_at' => $registration->registered_at,
+                'event' => [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                ],
+                'user' => [
+                    'id' => $registration->user->id,
+                    'name' => $registration->user->name,
+                ]
+            ]
+        ]);
     }
 }

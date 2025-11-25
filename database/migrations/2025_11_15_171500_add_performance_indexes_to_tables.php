@@ -19,7 +19,7 @@ return new class extends Migration {
         });
 
         // Add indexes to clubs table
-        Schema::table('clubs', function (Blueprint $table) {
+        Schema::table('club', function (Blueprint $table) {
             $table->index('created_at');
             $table->index('created_by');
         });
@@ -52,7 +52,7 @@ return new class extends Migration {
             $table->dropIndex(['created_at', 'status']);
         });
 
-        Schema::table('clubs', function (Blueprint $table) {
+        Schema::table('club', function (Blueprint $table) {
             $table->dropIndex(['created_at']);
             $table->dropIndex(['created_by']);
         });

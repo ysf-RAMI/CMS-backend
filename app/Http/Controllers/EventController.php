@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log; // Make sure this line is present
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use App\Services\CacheInvalidationService;
 
 class EventController extends Controller
 {
@@ -94,6 +95,7 @@ class EventController extends Controller
             $validatedData['image'] = '/images/default_event_image.jpg'; // Set default image
         }
         $event = Event::create($validatedData);
+        CacheInvalidationService::clearEvents(); // Clear the events cache
         return response()->json($event, 201);
     }
 
@@ -219,6 +221,7 @@ class EventController extends Controller
 
         Log::info('EventController@update: Event after update', $event->toArray());
 
+        CacheInvalidationService::clearEvents(); // Clear the events cache
         return response()->json($event);
     }
 
@@ -265,6 +268,7 @@ class EventController extends Controller
             return response()->json(['message' => 'Event not found'], 404);
         }
         $event->delete();
+        CacheInvalidationService::clearEvents(); // Clear the events cache
         return response()->json('Event deleted successfully', 200);
     }
 
@@ -329,7 +333,7 @@ class EventController extends Controller
         $event->save();
 
         // Clear events cache when data changes
-        Cache::forget('events.all');
+        CacheInvalidationService::clearEvents();
 
         return response()->json(['event' => $event], 200);
     }

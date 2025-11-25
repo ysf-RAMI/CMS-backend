@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClubController;
+use App\Http\Controllers\ClubUserController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
+use App\Models\ClubUser;
 use Illuminate\Support\Facades\Route;
 
 
@@ -41,6 +43,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/clubs/event', function () {
             return response()->json(['message' => 'Club Event Access Granted'], 200);
         });
+        Route::get('/clubs/{clubId}/events', [ClubController::class, 'getClubEvents']);
+        Route::get('/clubs/{clubId}/event-requests', [ClubController::class, 'getClubEventRequests']);
+        Route::get('/events/{eventId}/registrations', [EventRegistrationController::class, 'getEventRegistrations']);
+        Route::post('/events/{eventId}/approve-registration', [EventRegistrationController::class, 'approveRegistration']);
     });
 
     // Member api 
@@ -58,6 +64,8 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:student,member,admin-member,admin')->group(function () {
         Route::put('/users/{user}', [App\Http\Controllers\UserController::class, 'update']);
         Route::put('/users/{id}/updatePassword', [App\Http\Controllers\UserController::class, 'updatePassword']);
+        Route::get('/users/{userId}/club-requests', [ClubUserController::class, 'getUserClubRequests']);
+        Route::get('/users/{userId}/registered-events', [EventRegistrationController::class, 'getUserRegisteredEvents']);
     });
 
 });

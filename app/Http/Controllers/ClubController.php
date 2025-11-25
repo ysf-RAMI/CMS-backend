@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Club;
 use App\Models\ClubUser;
+use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\UniqueConstraintViolationException;
+use App\Services\CacheInvalidationService;
 
 class ClubController extends Controller
 {
@@ -97,6 +100,7 @@ class ClubController extends Controller
         $validatedData['created_by'] = auth()->id();
         try {
             $club = Club::create($validatedData);
+            CacheInvalidationService::clearClubs(); // Clear the clubs cache
             return response()->json($club, 201);
         } catch (UniqueConstraintViolationException $e) {
             return response()->json(['message' => 'A club with this name already exists.'], 409);
@@ -215,6 +219,7 @@ class ClubController extends Controller
 
         $club->update($validatedData);
 
+        CacheInvalidationService::clearClubs(); // Clear the clubs cache
         return response()->json([
             'message' => 'Club updated successfully',
             'club' => $club
@@ -264,6 +269,7 @@ class ClubController extends Controller
             return response()->json(['message' => 'Club not found'], 404);
         }
         $club->delete();
+        CacheInvalidationService::clearClubs(); // Clear the clubs cache
         return response()->json(['message' => 'Club deleted successfully'], 204);
     }
 
@@ -342,6 +348,7 @@ class ClubController extends Controller
 
         if ($status === 'rejected') {
             $clubUser->delete();
+            CacheInvalidationService::clearClubs(); // Clear clubs cache
             return response()->json(['message' => 'Student request rejected and removed from club'], 200);
         }
 
@@ -350,6 +357,7 @@ class ClubController extends Controller
         $clubUser->joined_at = now();
         $clubUser->save();
 
+        CacheInvalidationService::clearClubs(); // Clear clubs cache
         return response()->json(['message' => 'Student approved and added to club as member'], 200);
     }
 
@@ -424,7 +432,14 @@ class ClubController extends Controller
             $clubUser->save();
 
             \Log::info('Join Club: User successfully requested to join club.', ['user_id' => $user_id, 'club_id' => $club_id]);
-            return response()->json(['message' => 'Student added as pending to join the club'], 200);
+            CacheInvalidationService::clearClubs(); // Clear clubs cache
+            return response()->json([
+                'id' => $clubUser->id,
+                'status' => $clubUser->status,
+                'joined_at' => $clubUser->joined_at,
+                'club' => $clubUser->club,
+                'user' => $clubUser->user,
+            ], 201);
 
         } catch (\Exception $e) {
             \Log::error('Join Club: An unexpected error occurred.', [
@@ -493,7 +508,117 @@ class ClubController extends Controller
         }
         $clubUser->role = 'admin-member';
         $clubUser->save();
+        CacheInvalidationService::clearClubs(); // Clear clubs cache to reflect role changes
         return response()->json(['message' => 'Member promoted to admin'], 200);
+    }
+
+    public function getClubEvents(Request $request, $clubId)
+    {
+        $user = auth()->user();
+        $clubUser = ClubUser::where('club_id', $clubId)->where('user_id', $user->id)->first();
+        if (!$clubUser) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $status = $request->query('status', 'all');
+        $page = $request->query('page', 1);
+        $limit = $request->query('limit', 10);
+
+        $query = Event::where('club_id', $clubId)->with(['registrations.user']);
+
+        if ($status !== 'all') {
+            $query->whereHas('registrations', function ($q) use ($status) {
+                $q->where('status', $status);
+            });
+        }
+
+        $events = $query->paginate($limit, ['*'], 'page', $page);
+
+        $data = $events->map(function ($event) {
+            return [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->description,
+                'date' => $event->date,
+                'location' => $event->location,
+                'image' => $event->image,
+                'users' => $event->registrations->map(function ($reg) {
+                    return [
+                        'id' => $reg->user->id,
+                        'name' => $reg->user->name,
+                        'email' => $reg->user->email,
+                        'pivot' => [
+                            'id' => $reg->id,
+                            'status' => $reg->status,
+                            'registered_at' => $reg->registered_at,
+                        ]
+                    ];
+                })
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'page' => $events->currentPage(),
+                'limit' => $events->perPage(),
+                'total' => $events->total(),
+            ]
+        ]);
+    }
+
+    public function getClubEventRequests(Request $request, $clubId)
+    {
+        $user = auth()->user();
+        $clubUser = ClubUser::where('club_id', $clubId)->where('user_id', $user->id)->where('role', 'admin-member')->first();
+        if (!$clubUser) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $status = $request->query('status', 'pending');
+        $page = $request->query('page', 1);
+        $limit = $request->query('limit', 20);
+
+        $query = EventRegistration::whereHas('event', function ($q) use ($clubId) {
+            $q->where('club_id', $clubId);
+        })->with(['event', 'user']);
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $registrations = $query->paginate($limit, ['*'], 'page', $page);
+
+        $data = $registrations->map(function ($reg) {
+            return [
+                'event' => [
+                    'id' => $reg->event->id,
+                    'title' => $reg->event->title,
+                    'date' => $reg->event->date,
+                    'location' => $reg->event->location,
+                ],
+                'user' => [
+                    'id' => $reg->user->id,
+                    'name' => $reg->user->name,
+                    'email' => $reg->user->email,
+                ],
+                'pivot' => [
+                    'id' => $reg->id,
+                    'status' => $reg->status,
+                    'registered_at' => $reg->registered_at,
+                    'created_at' => $reg->created_at,
+                ]
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'page' => $registrations->currentPage(),
+                'limit' => $registrations->perPage(),
+                'total' => $registrations->total(),
+            ]
+        ]);
     }
 
 }
